@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>90s NES Stream Overlay - TGK / PAMMU NES</title>
+  <!-- Google Fonts for authentic 90s Pixel, LED 7-Segment, and Courier Slab look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&family=Orbitron:wght@700;900&family=Press+Start+2P&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --nes-shell: #c5c8cf;
+      --nes-inner: #242426;
+      --nes-plate: #afb2b9;
+      --nes-red: #e62314;
+      --led-color: #2bff66;
+      --led-glow: rgba(43, 255, 102, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent !important;
+      background-color: transparent !important;
+      font-family: 'Press Start 2P', monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 9:16 Exact Vertical Container matching reference screenshot proportions */
+    .overlay-frame {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: calc(100vh * (9 / 16));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      background: transparent !important;
+    }
+
+    /* If opened on an actual mobile phone in portrait, fill 100% width & height */
+    @media (max-aspect-ratio: 10/16) {
+      .overlay-frame {
+        max-width: 100vw;
+        width: 100vw;
+        height: 100vh;
+      }
+    }
+
+    /* ==========================================
+       1. TOP SECTION: 90s NES CONTROLLER HEADER
+       ========================================== */
+    .nes-header-outer {
+      height: 17.6%;
+      min-height: 122px;
+      width: 100%;
+      background: #08080a;
+      padding: 5px 5px 0 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 20;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.85);
+    }
+
+    .nes-metallic-shell {
+      flex: 1;
+      background: linear-gradient(180deg, #cfd2d9 0%, #c2c5cc 50%, #b4b7be 100%);
+      border-radius: 3px;
+      padding: 5px 6px;
+      box-shadow:
+        inset 0 2px 1px rgba(255,255,255,0.7),
+        inset 0 -2px 2px rgba(0,0,0,0.35);
+      display: flex;
+    }
+
+    .nes-dark-faceplate {
+      flex: 1;
+      background:
+        radial-gradient(circle at 50% 30%, #2e2f33 0%, #222326 70%, #1b1c1e 100%);
+      border-radius: 5px;
+      border: 2px solid #3a3b40;
+      box-shadow:
+        inset 0 3px 6px rgba(0,0,0,0.85),
+        0 1px 0 rgba(255,255,255,0.4);
+      display: grid;
+      grid-template-columns: 22.5% 55.5% 22%;
+      align-items: center;
+      padding: 4px 5px;
+      position: relative;
+    }
+
+    .nes-bottom-red-stripe {
+      height: 4px;
+      width: 100%;
+      background: linear-gradient(90deg, #d1170a 0%, #ff2a1a 50%, #d1170a 100%);
+      margin-top: 3px;
+      box-shadow: 0 0 8px rgba(255, 38, 20, 0.65);
+    }
+
+    /* --- LEFT: Authentic 8-Bit Cross D-Pad --- */
+    .dpad-zone {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    .dpad-wrapper {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,0.85));
+    }
+
+    .dpad-arm-h, .dpad-arm-v {
+      position: absolute;
+      background: #141416;
+      border: 2.5px solid #6b6e75;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.18);
+    }
+
+    .dpad-arm-v {
+      width: 24px;
+      height: 72px;
+      left: 24px;
+      top: 0;
+    }
+
+    .dpad-arm-h {
+      width: 72px;
+      height: 24px;
+      left: 0;
+      top: 24px;
+    }
+
+    /* Inner cover to hide the cross intersection borders */
+    .dpad-center-patch {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      left: 24px;
+      top: 24px;
+      background: #151517;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Subtly indented lines on D-pad arms like the screenshot */
+    .dpad-line-v1, .dpad-line-v2 {
+      position: absolute;
+      left: 24px;
+      width: 24px;
+      height: 2px;
+      background: #4e5057;
+      z-index: 3;
+    }
+    .dpad-line-v1 { top: 22px; }
+    .dpad-line-v2 { bottom: 22px; }
+
+    .dpad-line-h1, .dpad-line-h2 {
+      position: absolute;
+      top: 24px;
+      height: 24px;
+      width: 2px;
+      background: #4e5057;
+      z-index: 3;
+    }
+    .dpad-line-h1 { left: 22px; }
+    .dpad-line-h2 { right: 22px; }
+
+    .dpad-pivot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #2e3036 0%, #101113 80%);
+      box-shadow: inset 0 2px 3px rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.15);
+    }
+
+    .dpad-btn-hit {
+      position: absolute;
+      z-index: 5;
+      cursor: pointer;
+    }
+    .dpad-btn-hit:active {
+      background: rgba(255,255,255,0.12);
+    }
+
+    /* --- CENTER: Ribbed NES Center Deck + Real 90s Hardware Timer --- */
+    .center-ribs-zone {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1px 3px;
+      gap: 3px;
+    }
+
+    .nes-rib-top {
+      background: #b0b3ba;
+      border-radius: 4px;
+      padding: 3px 5px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .title-black-bar {
+      width: 100%;
+      background: linear-gradient(180deg, #161618 0%, #242428 100%);
+      border-radius: 4px;
+      padding: 3px 6px;
+      border: 1px solid #3c3d42;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .title-90s-text {
+      font-family: 'Courier Prime', monospace;
+      font-weight: 700;
+      font-size: clamp(11px, 3.3vw, 15px);
+      letter-spacing: 0.5px;
+      color: #ff9d1c;
+      text-shadow:
+        0 0 6px rgba(255, 140, 0, 0.8),
+        1px 1px 0px #871c00;
+      white-space: nowrap;
+    }
+
+    /* Middle Control Well (SELECT + REAL LED TIMER + START) */
+    .nes-rib-middle {
+      background: #b0b3ba;
+      border-radius: 4px;
+      padding: 3px 5px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(0,0,0,0.6);
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .select-start-deck {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #d7dae0 0%, #c6c9d1 100%);
+      border-radius: 4px;
+      border: 1.5px solid #7e8188;
+      box-shadow:
+        inset 0 1px 2px rgba(255,255,255,0.85),
+        inset 0 -1px 2px rgba(0,0,0,0.25);
+      display: grid;
+      grid-template-columns: 23% 54% 23%;
+      align-items: center;
+      padding: 2px 4px;
+    }
+
+    .pill-btn-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+    }
+
+    .pill-label {
+      font-family: 'Courier Prime', monospace;
+      font-weight: 700;
+      font-size: clamp(7.5px, 2vw, 9.5px);
+      color: #c91b12;
+      letter-spacing: 0.3px;
+      line-height: 1;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+    }
+
+    .nes-pill-btn {
+      width: 26px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #4b4d52 0%, #232427 65%, #151618 100%);
+      border: 1px solid #101012;
+      box-shadow:
+        0 2px 1px rgba(0,0,0,0.6),
+        inset 0 1px 1px rgba(255,255,255,0.3);
+      transition: transform 0.06s ease, box-shadow 0.06s ease;
+    }
+
+    .pill-btn-group:active .nes-pill-btn {
+      transform: translateY(1.5px);
+      box-shadow:
+        0 0px 1px rgba(0,0,0,0.6),
+        inset 0 1px 2px rgba(0,0,0,0.8);
+    }
+
+    /* UPGRADED REALISTIC 90s HARDWARE DIGITAL TIMER */
+    .hardware-timer-bezel {
+      position: relative;
+      width: 100%;
+      height: 29px;
+      background: linear-gradient(180deg, #050806 0%, #0a120c 55%, #040705 100%);
+      border-radius: 4px;
+      border: 2px solid #2b2e33;
+      box-shadow:
+        inset 0 2px 6px rgba(0,0,0,0.98),
+        inset 0 0 8px rgba(0, 255, 80, 0.14),
+        0 1px 0 rgba(255,255,255,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      padding: 0 5px;
+    }
+
+    /* Subtle glass reflection across the top half of the 90s LCD/LED screen */
+    .hardware-timer-bezel::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 46%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 100%);
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* Scanline grid inside the digital timer */
+    .hardware-timer-bezel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.28) 0px,
+        rgba(0, 0, 0, 0.28) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .timer-digits-stack {
+      position: relative;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      font-family: 'Share Tech Mono', 'Courier Prime', monospace;
+      font-weight: 700;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    /* Unlit 7-segment ghost background */
+    .timer-ghost-bg {
+      position: absolute;
+      inset: 0;
+      color: rgba(43, 255, 102, 0.11);
+      font-size: clamp(13px, 3.8vw, 17px);
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 1;
+    }
+
+    /* Lit glowing LED digits */
+    .timer-live-fg {
+      position: relative;
+      z-index: 2;
+      color: var(--led-color);
+      font-size: clamp(13px, 3.8vw, 17px);
+      text-shadow:
+        0 0 6px var(--led-glow),
+        0 0 12px rgba(43, 255, 102, 0.35);
+      white-space: nowrap;
+      display: flex;
+      align-items: baseline;
+    }
+
+    .timer-ms-sub {
+      font-size: clamp(8.5px, 2.3vw, 10.5px);
+      margin-left: 2px;
+      opacity: 0.92;
+      letter-spacing: 0px;
+    }
+
+    .timer-status-led {
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #2bff66;
+      box-shadow: 0 0 5px #2bff66;
+      z-index: 5;
+    }
+
+    .timer-status-led.paused {
+      background: #ff2a1a;
+      box-shadow: 0 0 5px #ff2a1a;
+      animation: blinkFast 0.8s infinite;
+    }
+
+    /* Bottom Rib ("Next Game? Chat Karo! | TGK") */
+    .nes-rib-bottom {
+      background: #b0b3ba;
+      border-radius: 4px;
+      padding: 2px 6px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 1px 2px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rib-bottom-text {
+      font-family: 'Courier Prime', monospace;
+      font-weight: 700;
+      font-size: clamp(8.5px, 2.4vw, 11px);
+      color: #16181d;
+      white-space: nowrap;
+      letter-spacing: -0.2px;
+    }
+
+    /* --- RIGHT: 4 Red Circular Arcade Action Buttons (T-B, T-A, B, A) --- */
+    .action-buttons-zone {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-left: 3px;
+    }
+
+    .action-white-plate {
+      width: 100%;
+      height: 96%;
+      background: linear-gradient(180deg, #e1e4eb 0%, #cfd3dc 100%);
+      border-radius: 5px;
+      border: 1.5px solid #8c9099;
+      box-shadow:
+        inset 0 1px 1px #ffffff,
+        0 2px 3px rgba(0,0,0,0.65);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      align-items: center;
+      justify-items: center;
+      padding: 3px 3px 1px 3px;
+    }
+
+    .nes-round-btn-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .nes-round-btn {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      position: relative;
+      transition: transform 0.06s ease;
+    }
+
+    /* Top row Turbo orange-red buttons */
+    .nes-round-btn.turbo {
+      background: radial-gradient(circle at 32% 28%, #ff7b3b 0%, #f03c11 55%, #a81c02 100%);
+      border: 1.5px solid #6e1200;
+      box-shadow:
+        0 2.5px 2px rgba(0,0,0,0.55),
+        inset 0 2px 2px rgba(255,255,255,0.45);
+    }
+
+    /* Bottom row Crimson red B / A buttons */
+    .nes-round-btn.standard {
+      background: radial-gradient(circle at 32% 28%, #ff4d4d 0%, #d91414 58%, #8f0404 100%);
+      border: 1.5px solid #5e0202;
+      box-shadow:
+        0 2.5px 2px rgba(0,0,0,0.55),
+        inset 0 2px 2px rgba(255,255,255,0.45);
+    }
+
+    .nes-round-btn-wrap:active .nes-round-btn {
+      transform: translateY(2px) scale(0.96);
+    }
+
+    .btn-code-label {
+      font-family: 'Courier Prime', monospace;
+      font-weight: 700;
+      font-size: 8.5px;
+      color: #a6170c;
+      line-height: 1;
+      margin-top: 2px;
+      letter-spacing: -0.3px;
+    }
+
+    /* ==========================================
+       2. MIDDLE SECTION: 100% TRANSPARENT GAMEPLAY CUTOUT
+       ========================================== */
+    .capture-area {
+      position: relative;
+      height: 43.2%;
+      width: 100%;
+      background: transparent !important;
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       3. BOTTOM SECTION: NEON RETRO BOXES + EMPTY QR BOX
+       ========================================== */
+    .bottom-neon-deck {
+      height: 39.2%;
+      width: 100%;
+      background: transparent;
+      padding: 6px 7px 4px 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      z-index: 20;
+    }
+
+    .hud-solid-backdrop {
+      background: rgba(8, 9, 15, 0.96);
+      border-top: 2px solid #262936;
+      border-bottom: 2px solid #262936;
+      padding: 7px;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.8);
+    }
+
+    /* --- BOX 1: Yellow Streamer Banner (PAMMU NES + LIVE) --- */
+    .neon-box-yellow {
+      background: #0d0a12;
+      border: 2px solid #f5c400;
+      border-radius: 3px;
+      box-shadow:
+        0 0 8px rgba(245, 196, 0, 0.35),
+        inset 0 0 8px rgba(245, 196, 0, 0.12);
+      padding: 6px 9px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .streamer-name-3d {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(11px, 3.2vw, 14px);
+      color: #ffe600;
+      text-shadow:
+        2px 2px 0px #e01b24,
+        0 0 8px rgba(255, 215, 0, 0.55);
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .streamer-sub-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7.5px, 2.2vw, 9.5px);
+      color: #b5a8ff;
+      letter-spacing: 0.3px;
+      margin-top: 3px;
+      line-height: 1.2;
+    }
+
+    .live-badge-90s {
+      background: linear-gradient(180deg, #ff1e42 0%, #d40d2e 100%);
+      border: 1.5px solid #ff7a93;
+      border-radius: 3px;
+      padding: 4px 8px;
+      box-shadow: 0 0 10px rgba(255, 30, 66, 0.75);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 2.3vw, 10px);
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+      animation: blinkFast 1s infinite;
+    }
+
+    /* --- MIDDLE-BOTTOM GRID: Left Info Stack + Right FAILS & EMPTY QR FRAME --- */
+    .vibe-qr-grid {
+      display: grid;
+      grid-template-columns: 1fr 110px;
+      gap: 7px;
+      align-items: stretch;
+    }
+
+    .left-vibe-column {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      justify-content: space-between;
+    }
+
+    /* Pink Active Vibe Box */
+    .neon-box-pink {
+      background: #120710;
+      border: 2px solid #ff1e56;
+      border-radius: 3px;
+      box-shadow:
+        0 0 8px rgba(255, 30, 86, 0.32),
+        inset 0 0 8px rgba(255, 30, 86, 0.12);
+      padding: 7px 8px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .vibe-heading {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7.5px, 2.1vw, 9px);
+      color: #ff2e63;
+      margin-bottom: 5px;
+      text-shadow: 0 0 5px rgba(255, 46, 99, 0.6);
+    }
+
+    .vibe-body {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7.5px, 2.1vw, 9.2px);
+      color: #ffffff;
+      line-height: 1.45;
+    }
+
+    /* Purple Classic 8-Bit / 16-Bit Box */
+    .neon-box-purple {
+      background: #0d0718;
+      border: 2px solid #9d2cff;
+      border-radius: 3px;
+      box-shadow:
+        0 0 8px rgba(157, 44, 255, 0.35),
+        inset 0 0 8px rgba(157, 44, 255, 0.14);
+      padding: 7px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .purple-vibe-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7px, 2vw, 8.8px);
+      color: #d7c9ff;
+      line-height: 1.45;
+    }
+
+    /* Right Column: FAILS Counter + CLEAN EMPTY QR FRAME BOX */
+    .right-qr-column {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      justify-content: space-between;
+    }
+
+    /* Compact Fails Counter Box */
+    .neon-box-fails {
+      background: #120f06;
+      border: 2px solid #e0b115;
+      border-radius: 3px;
+      box-shadow:
+        0 0 7px rgba(224, 177, 21, 0.28),
+        inset 0 0 6px rgba(224, 177, 21, 0.1);
+      padding: 5px 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .fails-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7px, 2vw, 8.5px);
+      color: #f5c400;
+    }
+
+    .fails-number {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 2.5vw, 11px);
+      color: #ff4757;
+      text-shadow: 0 0 6px rgba(255, 71, 87, 0.65);
+    }
+
+    /* EMPTY QR CODE BOX FRAME (Clean retro neon frame so user can place their own QR overlay on top) */
+    .neon-box-qr-empty {
+      position: relative;
+      flex: 1;
+      min-height: 78px;
+      background: #071210;
+      border: 2px solid #00f5a0;
+      border-radius: 3px;
+      box-shadow:
+        0 0 9px rgba(0, 245, 160, 0.38),
+        inset 0 0 10px rgba(0, 245, 160, 0.14);
+    }
+
+    /* Subtle retro corner brackets inside the empty QR box */
+    .neon-box-qr-empty::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border: 1px dashed rgba(0, 245, 160, 0.28);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    /* --- BOTTOM LIVE CHAT ZONE (100% Transparent for PRISM Live Studio Chat Widget) --- */
+    .chat-overlay-zone {
+      flex: 1;
+      min-height: 64px;
+      background: transparent !important;
+      pointer-events: none;
+    }
+
+    @keyframes blinkFast {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MAIN 9:16 VERTICAL OVERLAY CONTAINER -->
+  <div class="overlay-frame" id="overlayFrame">
+
+    <!-- =======================================================
+         1. TOP SECTION: 90s NES CONTROLLER + REAL HARDWARE TIMER
+         ======================================================= -->
+    <header class="nes-header-outer">
+      <div class="nes-metallic-shell">
+        <div class="nes-dark-faceplate">
+
+          <!-- LEFT: Authentic 8-Bit Cross D-Pad -->
+          <div class="dpad-zone">
+            <div class="dpad-wrapper">
+              <div class="dpad-arm-v"></div>
+              <div class="dpad-arm-h"></div>
+              <div class="dpad-line-v1"></div>
+              <div class="dpad-line-v2"></div>
+              <div class="dpad-line-h1"></div>
+              <div class="dpad-line-h2"></div>
+              <div class="dpad-center-patch">
+                <div class="dpad-pivot"></div>
+              </div>
+              <div class="dpad-btn-hit" style="top:0;left:24px;width:24px;height:24px;" onclick="pulseDpad('UP')"></div>
+              <div class="dpad-btn-hit" style="bottom:0;left:24px;width:24px;height:24px;" onclick="pulseDpad('DOWN')"></div>
+              <div class="dpad-btn-hit" style="top:24px;left:0;width:24px;height:24px;" onclick="pulseDpad('LEFT')"></div>
+              <div class="dpad-btn-hit" style="top:24px;right:0;width:24px;height:24px;" onclick="pulseDpad('RIGHT')"></div>
+            </div>
+          </div>
+
+          <!-- CENTER: Ribbed NES Deck + Upgraded 90s Digital Stopwatch/Timer -->
+          <div class="center-ribs-zone">
+            <!-- Top Title Rib -->
+            <div class="nes-rib-top">
+              <div class="title-black-bar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0">
+                  <rect x="3" y="16" width="18" height="5" rx="1.5" fill="#7c7f87" stroke="#111" stroke-width="1.5"/>
+                  <rect x="6" y="14" width="12" height="3" fill="#44464c"/>
+                  <line x1="12" y1="15" x2="12" y2="8" stroke="#d0d4dc" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle cx="12" cy="5.5" r="4" fill="#e62314" stroke="#7a0902" stroke-width="1.2"/>
+                  <circle cx="10.8" cy="4.2" r="1.2" fill="#ff8b80"/>
+                  <rect x="16" y="17.5" width="2.5" height="1.8" fill="#e62314"/>
+                </svg>
+                <span class="title-90s-text">90s TV VIDEO GAME</span>
+              </div>
+            </div>
+
+            <!-- Middle SELECT / REAL LED TIMER / START Rib -->
+            <div class="nes-rib-middle">
+              <div class="select-start-deck">
+                <!-- SELECT Button (Resets Timer) -->
+                <div class="pill-btn-group" onclick="handleSelectButton()">
+                  <span class="pill-label">SELECT</span>
+                  <div class="nes-pill-btn"></div>
+                </div>
+
+                <!-- UPGRADED REAL 90s HARDWARE 7-SEGMENT LED TIMER -->
+                <div class="hardware-timer-bezel" onclick="cycleTimerColorOrMode()">
+                  <span id="timerStatusDot" class="timer-status-led"></span>
+                  <div class="timer-digits-stack">
+                    <span class="timer-ghost-bg" id="timerGhostText">88:88:88</span>
+                    <span class="timer-live-fg">
+                      <span id="timerMainDigits">00:00:00</span>
+                      <span id="timerMsDigits" class="timer-ms-sub hidden">.0</span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- START Button (Starts / Pauses Real Timer) -->
+                <div class="pill-btn-group" onclick="handleStartButton()">
+                  <span class="pill-label">START</span>
+                  <div class="nes-pill-btn"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Rib: Next Game? Chat Karo! | TGK -->
+            <div class="nes-rib-bottom">
+              <div class="rib-bottom-text">
+                <span>Next Game? Chat Karo!</span>
+                <span class="mx-0.5 text-neutral-700">|</span>
+                <span class="text-[#c91b12] font-extrabold">TGK</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: 4 Red Circular 3D Arcade Buttons (T-B, T-A, B, A) -->
+          <div class="action-buttons-zone">
+            <div class="action-white-plate">
+              <div class="nes-round-btn-wrap" onclick="adjustFails(-1)">
+                <div class="nes-round-btn turbo"></div>
+                <span class="btn-code-label">T-B</span>
+              </div>
+              <div class="nes-round-btn-wrap" onclick="cycleTimerColorOrMode()">
+                <div class="nes-round-btn turbo"></div>
+                <span class="btn-code-label">T-A</span>
+              </div>
+              <div class="nes-round-btn-wrap" onclick="adjustFails(-1)">
+                <div class="nes-round-btn standard"></div>
+                <span class="btn-code-label">B</span>
+              </div>
+              <div class="nes-round-btn-wrap" onclick="adjustFails(1)">
+                <div class="nes-round-btn standard"></div>
+                <span class="btn-code-label">A</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <!-- Red Accent Bottom Line -->
+      <div class="nes-bottom-red-stripe"></div>
+    </header>
+
+    <!-- =======================================================
+         2. MIDDLE SECTION: 100% EMPTY & TRANSPARENT GAMEPLAY AREA
+         ======================================================= -->
+    <main class="capture-area"></main>
+
+    <!-- =======================================================
+         3. BOTTOM SECTION: NEON RETRO PANELS + EMPTY QR BOX FRAME
+         ======================================================= -->
+    <footer class="bottom-neon-deck">
+
+      <div class="hud-solid-backdrop">
+        <!-- TOP NEON BANNER: PAMMU NES + LIVE -->
+        <div class="neon-box-yellow">
+          <div>
+            <div class="streamer-name-3d">PAMMU NES</div>
+            <div class="streamer-sub-text">CHILL RETRO &amp; NOSTALGIA STREAM</div>
+          </div>
+          <div class="live-badge-90s">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+          </div>
+        </div>
+
+        <!-- MIDDLE GRID: Left (Active Vibe + Classic 8-Bit/16-Bit) | Right (FAILS + EMPTY QR BOX) -->
+        <div class="vibe-qr-grid">
+
+          <!-- Left Column -->
+          <div class="left-vibe-column">
+            <!-- Pink Box: ACTIVE VIBE -->
+            <div class="neon-box-pink">
+              <div class="vibe-heading">ACTIVE VIBE</div>
+              <div class="vibe-body">
+                ☕ CHILL RETRO SPEEDRUN &amp; NOSTALGIA!
+              </div>
+            </div>
+
+            <!-- Purple Box: CLASSIC 8-BIT / 16-BIT RETRO VIBES -->
+            <div class="neon-box-purple">
+              <div class="purple-vibe-text">
+                CLASSIC 8-BIT / 16-BIT RETRO VIBES 💎
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: FAILS Counter + CLEAN EMPTY QR BOX FRAME -->
+          <div class="right-qr-column">
+            <!-- Yellow Box: FAILS Counter -->
+            <div class="neon-box-fails" onclick="adjustFails(1)" oncontextmenu="resetFails(event)">
+              <span class="fails-label">FAILS 💀</span>
+              <span class="fails-number" id="failsCountDisplay">0</span>
+            </div>
+
+            <!-- CLEAN EMPTY QR CODE BOX (Place your own QR image over this box in PRISM/OBS) -->
+            <div class="neon-box-qr-empty"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BOTTOM CHAT AREA (100% Empty & Transparent for Live Chat Widget) -->
+      <div class="chat-overlay-zone"></div>
+
+    </footer>
+
+  </div>
+
+  <!-- =======================================================
+       JAVASCRIPT LOGIC: REAL HARDWARE TIMER & FAILS COUNTER
+       ======================================================= -->
+  <script>
+    // --- 1. UPGRADED REAL 90s CONTROLLER STOPWATCH / STREAM TIMER ---
+    let elapsedMs = 0;
+    let timerRunning = true;
+    let lastFrameTime = performance.now();
+    let showTenths = false;
+    let ledThemeIndex = 0;
+
+    const ledThemes = [
+      { color: '#2bff66', glow: 'rgba(43, 255, 102, 0.78)' }, // Classic 90s NES Green LED
+      { color: '#ff3823', glow: 'rgba(255, 56, 35, 0.82)' },  // 90s Red 7-Segment LED
+      { color: '#ffb700', glow: 'rgba(255, 183, 0, 0.80)' }   // Retro Amber Arcade LED
+    ];
+
+    const timerMainEl = document.getElementById('timerMainDigits');
+    const timerMsEl = document.getElementById('timerMsDigits');
+    const timerGhostEl = document.getElementById('timerGhostText');
+    const timerStatusDot = document.getElementById('timerStatusDot');
+
+    function formatHardwareTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(totalSeconds % 60).padStart(2, '0');
+      const tenths = Math.floor((ms % 1000) / 100);
+      return { main: `${hrs}:${mins}:${secs}`, tenths: `.${tenths}` };
+    }
+
+    function updateTimerLoop(now) {
+      if (timerRunning) {
+        const delta = now - lastFrameTime;
+        elapsedMs += delta;
+      }
+      lastFrameTime = now;
+
+      const formatted = formatHardwareTime(elapsedMs);
+      timerMainEl.textContent = formatted.main;
+      if (showTenths) {
+        timerMsEl.textContent = formatted.tenths;
+      }
+      requestAnimationFrame(updateTimerLoop);
+    }
+
+    // START Button: Starts / Pauses the real timer
+    function handleStartButton() {
+      timerRunning = !timerRunning;
+      lastFrameTime = performance.now();
+      if (timerRunning) {
+        timerStatusDot.classList.remove('paused');
+      } else {
+        timerStatusDot.classList.add('paused');
+      }
+    }
+
+    // SELECT Button: Resets timer to 00:00:00
+    function handleSelectButton() {
+      elapsedMs = 0;
+      lastFrameTime = performance.now();
+      const formatted = formatHardwareTime(elapsedMs);
+      timerMainEl.textContent = formatted.main;
+    }
+
+    // Tapping the LED screen or T-A cycles tenths (.0ms) & LED color
+    function cycleTimerColorOrMode() {
+      if (!showTenths) {
+        showTenths = true;
+        timerMsEl.classList.remove('hidden');
+        timerGhostEl.textContent = '88:88:88.8';
+      } else {
+        showTenths = false;
+        timerMsEl.classList.add('hidden');
+        timerGhostEl.textContent = '88:88:88';
+        ledThemeIndex = (ledThemeIndex + 1) % ledThemes.length;
+        const theme = ledThemes[ledThemeIndex];
+        document.documentElement.style.setProperty('--led-color', theme.color);
+        document.documentElement.style.setProperty('--led-glow', theme.glow);
+      }
+    }
+
+    // --- 2. FAILS COUNTER ---
+    let failsCount = 0;
+    const failsCountDisplay = document.getElementById('failsCountDisplay');
+
+    function adjustFails(delta) {
+      failsCount = Math.max(0, failsCount + delta);
+      failsCountDisplay.textContent = failsCount;
+    }
+
+    function resetFails(e) {
+      if (e) e.preventDefault();
+      failsCount = 0;
+      failsCountDisplay.textContent = '0';
+    }
+
+    function pulseDpad(dir) {
+      const wrapper = document.querySelector('.dpad-wrapper');
+      const transforms = {
+        UP: 'perspective(200px) rotateX(8deg)',
+        DOWN: 'perspective(200px) rotateX(-8deg)',
+        LEFT: 'perspective(200px) rotateY(-8deg)',
+        RIGHT: 'perspective(200px) rotateY(8deg)'
+      };
+      wrapper.style.transform = transforms[dir] || 'none';
+      setTimeout(() => {
+        wrapper.style.transform = 'none';
+      }, 120);
+    }
+
+    window.onload = function () {
+      lastFrameTime = performance.now();
+      requestAnimationFrame(updateTimerLoop);
+    };
+  </script>
+</body>
+</html>
